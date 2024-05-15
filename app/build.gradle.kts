@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.fitnessanalysis"
-        minSdk = 30
+        minSdk = 31
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -43,6 +43,7 @@ dependencies {
     implementation("androidx.activity:activity:1.8.0")
     implementation("androidx.navigation:navigation-fragment:2.6.0")
     implementation("androidx.navigation:navigation-ui:2.6.0")
+    implementation("com.google.ai.client.generativeai:generativeai:0.2.2")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -50,5 +51,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-fitness:21.0.0")
     implementation("androidx.health.connect:connect-client:1.1.0-alpha02")
     implementation("androidx.core:core:VERSIO")
-//    implementation("com.github.danshannon:oauth2-strava:1.0.0")
+    implementation("com.google.guava:guava:31.0.1-android")
+    implementation("org.reactivestreams:reactive-streams:1.0.4")
+    implementation("androidx.room:room-runtime:2.4.0")// Room database runtime
+    annotationProcessor("androidx.room:room-compiler:2.4.0") // Room annotation processor
 }
