@@ -1,6 +1,7 @@
 package com.example.fitnessanalysis;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,6 +20,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.example.fitnessanalysis.client.GoogleSheetClient;
+import com.example.fitnessanalysis.data.ActivityData;
+import com.example.fitnessanalysis.services.GoogleSheetsApiServices;
 import com.google.ai.client.generativeai.GenerativeModel;
 import com.google.ai.client.generativeai.java.ChatFutures;
 import com.google.ai.client.generativeai.java.GenerativeModelFutures;
@@ -42,6 +46,7 @@ import com.google.android.gms.fitness.result.DataReadResponse;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -67,11 +72,17 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link Information#newInstance} factory method to
  * create an instance of this fragment.
  */
+
 public class Information extends Fragment {
     private static final String AUTH_URL = "https://www.strava.com/oauth/token";
     private static final String ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities";
@@ -79,9 +90,9 @@ public class Information extends Fragment {
     private static final String CLIENT_SECRET = "8d1eb89984755e8d7213733c42c600b95300bbbd";
     private static final String REFRESH_TOKEN = "f6bcfb09f4b112e8e783a33f0039316702df9884";
 
-
     Scope fitnessActivityReadScope = new Scope("https://www.googleapis.com/auth/fitness.activity.read");
     Scope fitnessLocationReadScope = new Scope("https://www.googleapis.com/auth/fitness.location.read");
+    Scope spreadSheetsScope = new Scope("https://www.googleapis.com/auth/spreadsheets");
     TextView heartRate;
     TextView activityType, distance, movingTime, activityName, speed, workoutReview;
     Button generateReview, saveButton;
@@ -127,7 +138,10 @@ public class Information extends Fragment {
         }
         GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
-                .requestScopes(fitnessActivityReadScope, fitnessLocationReadScope)
+                .requestScopes(
+                        fitnessActivityReadScope,
+                        fitnessLocationReadScope
+                )
                 .build();
         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this.activity, googleSignInOptions);
         long startTime = System.currentTimeMillis();
@@ -184,6 +198,7 @@ public class Information extends Fragment {
 
         chat = model.startChat(chatHistory);
     }
+
     private void getFeedback(JSONObject activity) throws JSONException {
         Content.Builder messageBuilder = new Content.Builder();
         messageBuilder.setRole("user");
@@ -232,10 +247,12 @@ public class Information extends Fragment {
                 readHeartRateData(account);
 //                readActivity(account);
             } catch (ApiException e) {
-                // The ApiException status code indicates the detailed failure reason.
+                // The ApiException status code indicates the detailed failure reason
+                Log.e("ERROR", "Unable to read heart rate.");
             }
         }
     }
+
     private void readHeartRateData(GoogleSignInAccount account) {
         long endTime = System.currentTimeMillis(); // Set the end time to the current time
 
@@ -299,6 +316,7 @@ public class Information extends Fragment {
                     }
                 });
     }
+
     private String getFormattedDateTime(long timestamp) {
         // Create a SimpleDateFormat instance with the desired date-time format
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
@@ -309,6 +327,7 @@ public class Information extends Fragment {
         // Format the Date object to a string
         return sdf.format(date);
     }
+
     private class FetchActivitiesTask extends AsyncTask<Void, Void, List<JSONObject>> {
 
         @Override
@@ -373,6 +392,7 @@ public class Information extends Fragment {
 
         return dateString;
     }
+
     private void displayActivity(JSONObject activity) throws JSONException {
         // Create a TextView to display the activity
         activityType = getView().findViewById(R.id.activity_type);
@@ -403,6 +423,16 @@ public class Information extends Fragment {
                 heartRateData,
                 getCurrentDate()
         );
+        ActivityData activitydata = new ActivityData(
+                myActivity.getName(),
+                String.valueOf(myActivity.getDistance()),
+                myActivity.getType(),
+                myActivity.getMovingTime(),
+                myActivity.getAverageSpeed(),
+                myActivity.getHeartRate(),
+                myActivity.getTime_stamp()
+        );
+
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -414,11 +444,35 @@ public class Information extends Fragment {
                     activityDao.addActivity(myActivity);
                 });
 
+                sendDataToGoogleSheet(activitydata);
+
                 Toast.makeText(getContext(), "Activity Added", Toast.LENGTH_SHORT).show();
+
             }
         });
+    }
 
+    private void sendDataToGoogleSheet(ActivityData activityData) {
+        Retrofit retrofit = GoogleSheetClient.getRetrofitInstance();
+        GoogleSheetsApiServices apiServices = retrofit.create(GoogleSheetsApiServices.class);
 
+        Call<Void> call = apiServices.sendActivityData(activityData);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Data sent successfully", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Failed to send data", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(getContext(), "Error : " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                t.printStackTrace();
+            }
+        });
     }
 
     private String fetchAccessToken() throws IOException, JSONException {
