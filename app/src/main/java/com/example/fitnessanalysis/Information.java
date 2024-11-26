@@ -448,7 +448,6 @@ public class Information extends Fragment {
 
                 Toast.makeText(getContext(), "Activity Added", Toast.LENGTH_SHORT).show();
 
-//                Snackbar snackbar = Snackbar.make(getView(), "Activity Added", Snackbar.LENGTH_SHORT);
             }
         });
     }
