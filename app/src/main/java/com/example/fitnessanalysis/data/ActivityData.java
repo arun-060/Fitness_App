@@ -3,9 +3,6 @@ package com.example.fitnessanalysis.data;
 import com.google.gson.annotations.SerializedName;
 
 public class ActivityData {
-    @SerializedName("id")
-    private int id;
-
     @SerializedName("name")
     private String name;
 
@@ -27,8 +24,8 @@ public class ActivityData {
     @SerializedName("date")
     private String time_stamp;
 
-    public ActivityData(int id, String name, String distance, String type, int movingTime, double averageSpeed, String heartRate, String time_stamp) {
-        this.id = id;
+    public ActivityData(String name, String distance, String type, int movingTime, double averageSpeed, String heartRate, String time_stamp) {
+
         this.name = name;
         this.distance = distance;
         this.type = type;
@@ -36,14 +33,6 @@ public class ActivityData {
         this.averageSpeed = averageSpeed;
         this.heartRate = heartRate;
         this.time_stamp = time_stamp;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getName() {

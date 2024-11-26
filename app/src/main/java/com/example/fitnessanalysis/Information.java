@@ -22,6 +22,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.fitnessanalysis.client.GoogleSheetClient;
 import com.example.fitnessanalysis.data.ActivityData;
+import com.example.fitnessanalysis.services.GoogleSheetsApiServices;
 import com.google.ai.client.generativeai.GenerativeModel;
 import com.google.ai.client.generativeai.java.ChatFutures;
 import com.google.ai.client.generativeai.java.GenerativeModelFutures;
@@ -70,6 +71,11 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -418,7 +424,6 @@ public class Information extends Fragment {
                 getCurrentDate()
         );
         ActivityData activitydata = new ActivityData(
-                myActivity.getId(),
                 myActivity.getName(),
                 String.valueOf(myActivity.getDistance()),
                 myActivity.getType(),
@@ -427,7 +432,7 @@ public class Information extends Fragment {
                 myActivity.getHeartRate(),
                 myActivity.getTime_stamp()
         );
-        GoogleSheetClient googleSheetClient = new GoogleSheetClient();
+
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -439,14 +444,36 @@ public class Information extends Fragment {
                     activityDao.addActivity(myActivity);
                 });
 
-                googleSheetClient.sendActivityData(activitydata);
+                sendDataToGoogleSheet(activitydata);
+
                 Toast.makeText(getContext(), "Activity Added", Toast.LENGTH_SHORT).show();
 
 //                Snackbar snackbar = Snackbar.make(getView(), "Activity Added", Snackbar.LENGTH_SHORT);
             }
         });
+    }
 
+    private void sendDataToGoogleSheet(ActivityData activityData) {
+        Retrofit retrofit = GoogleSheetClient.getRetrofitInstance();
+        GoogleSheetsApiServices apiServices = retrofit.create(GoogleSheetsApiServices.class);
 
+        Call<Void> call = apiServices.sendActivityData(activityData);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Data sent successfully", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Failed to send data", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(getContext(), "Error : " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                t.printStackTrace();
+            }
+        });
     }
 
     private String fetchAccessToken() throws IOException, JSONException {
