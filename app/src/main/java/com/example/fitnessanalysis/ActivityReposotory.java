@@ -16,7 +16,7 @@ class ActivityRepository {
         mActivity = db.activityDao();
     }
 
-    LiveData<List<MyActivity>> getAllContacts() {
+    LiveData<List<MyActivity>> getmAllActivity() {
         return mAllActivity;
     }
 
@@ -25,4 +25,11 @@ class ActivityRepository {
             mActivity.addActivity(myActivity);
         });
     }
+
+//    void getMyActivity() {
+//        ActivityDatabase.databaseWriteExecutor.execute(()-> {
+//            mAllActivity = mActivity.getAllActivity();
+//        });
+//    }
+
 }

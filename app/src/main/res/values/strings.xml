@@ -44,4 +44,5 @@
     </string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="BASE_URL_SHEET">https://script.google.com/macros/s/AKfycbyRvm6jlvMSs_0OJv_ooPs7cjuCwAa39cTNgjpSzmVrUBxWVzJziM7B8mnHTZ3diGg/exec</string>
 </resources>

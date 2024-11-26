@@ -13,4 +13,6 @@ public interface ActivityDao{
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     void addActivity(MyActivity myActivity);
 
+//    @Query("SELECT * FROM my_activity")
+//    LiveData<List<MyActivity>> getAllActivity();
 }
